@@ -1,0 +1,48 @@
+{
+    "name": "sonnalabs/lescopr",
+    "description": "Lescopr Sdk for PHP applications",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "SonnaLabs",
+            "email": "contact@lescopr.com"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "guzzlehttp/guzzle": "^7.0",
+        "ocramius/package-versions": "^2.10",
+        "psr/log": "^1.1 || ^2.0 || ^3.0",
+        "ramsey/uuid": "^4.7",
+        "ratchet/pawl": "^0.4.3"
+    },
+    "require-dev": {
+        "mikey179/vfsstream": "^1.6",
+        "phpunit/phpunit": "^9.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "SonnaLabs\\Lescopr\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SonnaLabs\\Lescopr\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit tests/",
+        "lint": "php-cs-fixer fix --dry-run --diff",
+        "lint-fix": "php-cs-fixer fix"
+    },
+    "bin": [
+        "bin/lescopr"
+    ],
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

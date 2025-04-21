@@ -1,0 +1,298 @@
+<?php
+#!/usr/bin/env php
+
+$autoloaderPaths = [
+    __DIR__ . '/../../vendor/autoload.php',
+    __DIR__ . '/../vendor/autoload.php',
+];
+
+$autoloaderFound = false;
+foreach ($autoloaderPaths as $path) {
+    if (file_exists($path)) {
+        require_once $path;
+        $autoloaderFound = true;
+        break;
+    }
+}
+
+if (!$autoloaderFound) {
+    fwrite(STDERR, "Error: Composer autoloader not found. Run 'composer install'." . PHP_EOL);
+    exit(1);
+}
+
+// Import SDK classes
+use SonnaLabs\Lescopr\Api;
+use SonnaLabs\Lescopr\Config;
+use SonnaLabs\Lescopr\ApiException;
+use SonnaLabs\Lescopr\ConfigException;
+use SonnaLabs\Lescopr\Lescopr;
+use Ramsey\Uuid\Uuid;
+use PackageVersions\Versions;
+
+const CONFIG_FILENAME = '.lescoprrc.json';
+const PACKAGE_NAME = 'sonnalabs/lescopr';
+
+/**
+ * Command handler class
+ */
+class LescoprCli
+{
+    /**
+     * Get SDK version from Composer
+     */
+    private static function getSdkVersion(): string
+    {
+        try {
+            $fullVersion = Versions::getVersion(PACKAGE_NAME);
+            if (preg_match('/^(\d+\.\d+\.\d+)/', $fullVersion, $matches)) {
+                return $matches[1];
+            }
+            if (preg_match('/^(dev-[a-zA-Z0-9_-]+)/', $fullVersion, $matches)) {
+                return $matches[1];
+            }
+            return $fullVersion;
+        } catch (\OutOfBoundsException $e) {
+            return 'unknown';
+        }
+    }
+
+    /**
+     * Handle 'config' command
+     * Asks for API key, validates it, and saves configuration
+     */
+    public static function configCommand(): void
+    {
+        echo "\n\033[36m--- Lescopr SDK Configuration ---\033[0m\n";
+        $configPath = getcwd() . DIRECTORY_SEPARATOR . CONFIG_FILENAME;
+        echo "This will create/update the configuration file: " . CONFIG_FILENAME . "\n";
+
+        $configHandler = new Config();
+
+        // Check if the file already exists
+        if (file_exists($configPath)) {
+            $overwrite = readline("Configuration file already exists. Do you want to overwrite it? (yes/no) [no]: ");
+            if (strtolower(trim($overwrite)) !== 'yes') {
+                echo "Configuration cancelled.\n";
+                exit(0);
+            }
+        }
+
+        $apiKey = readline("Enter your Lescopr API key: ");
+        if (empty(trim($apiKey))) {
+            fwrite(STDERR, "Error: API key cannot be empty.\n");
+            exit(1);
+        }
+        $apiKey = trim($apiKey);
+
+        $instanceId = Uuid::uuid4()->toString();
+        echo "Generating a new unique instance ID...\n";
+
+        echo "Validating API key with Lescopr servers...\n";
+        $apiClient = new Api($apiKey, $instanceId);
+        try {
+            $validationData = $apiClient->validateApiKey();
+            echo "\033[32mAPI key validated successfully!\033[0m\n";
+            if (!empty($validationData['companyName'])) {
+                echo "Company name: " . $validationData['companyName'] . "\n";
+            }
+        } catch (ApiException $e) {
+            fwrite(STDERR, "\033[31mAPI key validation error: " . $e->getMessage() . "\033[0m\n");
+            exit(1);
+        } catch (\Throwable $e) {
+            fwrite(STDERR, "\033[31mUnexpected error during validation: " . $e->getMessage() . "\033[0m\n");
+            exit(1);
+        }
+
+        // Write configuration
+        $configData = [
+            'apiKey' => $apiKey,
+            'instanceId' => $instanceId,
+            'companyName' => $validationData['companyName'] ?? null,
+            'createdAt' => (new \DateTimeImmutable())->format(\DateTimeInterface::ISO8601),
+            'sdkVersion' => self::getSdkVersion(),
+        ];
+
+        try {
+            echo "Writing configuration to " . CONFIG_FILENAME . "...\n";
+            $configHandler->writeConfig($configPath, $configData);
+
+            echo "Checking .gitignore file...\n";
+            $configHandler->ensureGitignore(getcwd(), CONFIG_FILENAME);
+
+            echo "\n\033[32mConfiguration completed successfully!\033[0m\n";
+            echo "The file \033[33m" . CONFIG_FILENAME . "\033[0m has been created/updated.\n";
+            echo "Don't forget to initialize the SDK in your PHP application with `Lescopr::init();`\n";
+        } catch (ConfigException $e) {
+            fwrite(STDERR, "\033[31mError writing configuration: " . $e->getMessage() . "\033[0m\n");
+            exit(1);
+        } catch (\Throwable $e) {
+            fwrite(STDERR, "\033[31mUnexpected error during save: " . $e->getMessage() . "\033[0m\n");
+            exit(1);
+        }
+    }
+
+    /**
+     * Handle 'info' command
+     * Display current configuration information
+     */
+    public static function infoCommand(): void
+    {
+        echo "\n\033[36m--- Lescopr Configuration Information ---\033[0m\n";
+        $configPath = getcwd() . DIRECTORY_SEPARATOR . CONFIG_FILENAME;
+        $configHandler = new Config();
+
+        try {
+            $configData = $configHandler->readConfig($configPath);
+            if ($configData === null) {
+                echo "Configuration file '" . CONFIG_FILENAME . "' not found.\n";
+                echo "Run 'vendor/bin/lescopr config' to set up.\n";
+                exit(1);
+            }
+
+            echo "Configuration file: " . $configPath . "\n";
+            echo "Instance ID        : " . ($configData['instanceId'] ?? 'N/A') . "\n";
+            echo "Company name (local): " . ($configData['companyName'] ?? 'N/A') . "\n";
+            echo "Creation date      : " . ($configData['createdAt'] ?? 'N/A') . "\n";
+            echo "SDK version        : " . ($configData['sdkVersion'] ?? 'N/A') . " (current: " . self::getSdkVersion() . ")\n";
+
+            if (isset($configData['apiKey']) && isset($configData['instanceId'])) {
+                echo "\nChecking status with Lescopr API...\n";
+                $apiClient = new Api($configData['apiKey'], $configData['instanceId']);
+                try {
+                    $statusData = $apiClient->checkStatus();
+                    echo "\033[32mAPI status          : " . ($statusData['status'] ?? 'OK') . "\033[0m\n";
+                    echo "API message         : " . ($statusData['message'] ?? 'N/A') . "\n";
+                    echo "Plan status         : " . ($statusData['planStatus'] ?? 'N/A') . "\n";
+                    echo "Plan expiration     : " . ($statusData['planExpiry'] ?? 'N/A') . "\n";
+                } catch (ApiException $e) {
+                    echo "\033[31mError checking API status: " . $e->getMessage() . "\033[0m\n";
+                } catch (\Throwable $e) {
+                    echo "\033[31mUnexpected error checking API status: " . $e->getMessage() . "\033[0m\n";
+                }
+            } else {
+                echo "\nAPI key or Instance ID missing in configuration file for API status check.\n";
+            }
+        } catch (ConfigException $e) {
+            fwrite(STDERR, "\033[31mError reading configuration: " . $e->getMessage() . "\033[0m\n");
+            exit(1);
+        } catch (\Throwable $e) {
+            fwrite(STDERR, "\033[31mUnexpected error: " . $e->getMessage() . "\033[0m\n");
+            exit(1);
+        }
+    }
+
+    /**
+     * Handle 'reset' command
+     * Remove the configuration file
+     */
+    public static function resetCommand(): void
+    {
+        echo "\n\033[36m--- Lescopr Configuration Reset ---\033[0m\n";
+        $configPath = getcwd() . DIRECTORY_SEPARATOR . CONFIG_FILENAME;
+        $configHandler = new Config();
+
+        if (!file_exists($configPath)) {
+            echo "Configuration file '" . CONFIG_FILENAME . "' does not exist. Nothing to do.\n";
+            exit(0);
+        }
+
+        $confirm = readline("Are you sure you want to delete the configuration file '" . CONFIG_FILENAME . "'? (yes/no) [no]: ");
+        if (strtolower(trim($confirm)) !== 'yes') {
+            echo "Reset cancelled.\n";
+            exit(0);
+        }
+
+        try {
+            $configData = $configHandler->readConfig($configPath);
+            $instanceId = $configData['instanceId'] ?? null;
+            $apiKey = $configData['apiKey'] ?? null;
+
+            echo "Deleting configuration file...\n";
+            $configHandler->deleteConfig($configPath);
+            echo "\033[32mConfiguration file deleted successfully.\033[0m\n";
+
+            if ($instanceId && $apiKey) {
+                echo "Notifying backend of reset...\n";
+                try {
+                    $apiClient = new Api($apiKey, $instanceId);
+                    $apiClient->notifyReset();
+                } catch (\Throwable $apiError) {
+                    fwrite(STDERR, "\033[33mWarning: Failed to notify backend: " . $apiError->getMessage() . "\033[0m\n");
+                }
+            }
+        } catch (ConfigException $e) {
+            fwrite(STDERR, "\033[31mError during reset: " . $e->getMessage() . "\033[0m\n");
+            exit(1);
+        } catch (\Throwable $e) {
+            fwrite(STDERR, "\033[31mUnexpected error during reset: " . $e->getMessage() . "\033[0m\n");
+            exit(1);
+        }
+    }
+
+    /**
+     * Handle 'version' command
+     */
+    public static function versionCommand(): void
+    {
+        $version = self::getSdkVersion();
+        echo "Lescopr SDK (PHP) version " . $version . "\n";
+    }
+
+    /**
+     * Handle 'help' command
+     */
+    public static function helpCommand(): void
+    {
+        $version = self::getSdkVersion();
+        echo "\nLescopr SDK CLI (PHP Version: " . $version . ")\n\n";
+        echo "\033[33mUsage:\033[0m\n";
+        echo "  vendor/bin/lescopr <command>\n\n";
+        echo "\033[33mAvailable commands:\033[0m\n";
+        echo "  \033[32mconfig\033[0m   Configure the Lescopr SDK for this project.\n";
+        echo "  \033[32minfo\033[0m     Display current configuration and status (if possible).\n";
+        echo "  \033[32mreset\033[0m    Delete the local Lescopr configuration file.\n";
+        echo "  \033[32mversion\033[0m  Show Lescopr SDK installed version.\n";
+        echo "  \033[32mhelp\033[0m     Show this help message.\n\n";
+        echo "The configuration file is typically: " . CONFIG_FILENAME . "\n";
+    }
+
+    /**
+     * Main CLI entry point
+     */
+    public static function main(array $argv): void
+    {
+        $args = array_slice($argv, 1);
+        $command = $args[0] ?? 'help';
+
+        if (in_array($command, ['-v', '--version'])) {
+            $command = 'version';
+        }
+        if (in_array($command, ['-h', '--help'])) {
+            $command = 'help';
+        }
+
+        switch ($command) {
+            case 'config':
+                self::configCommand();
+                break;
+            case 'info':
+                self::infoCommand();
+                break;
+            case 'reset':
+                self::resetCommand();
+                break;
+            case 'version':
+                self::versionCommand();
+                break;
+            case 'help':
+                self::helpCommand();
+                exit(0);
+            default:
+                fwrite(STDERR, "\033[31mUnknown command: '" . $command . "'\033[0m\n\n");
+                self::helpCommand();
+                exit(1);
+        }
+    }
+}
+
+LescoprCli::main($argv);
