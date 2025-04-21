@@ -2,7 +2,7 @@
 #!/usr/bin/env php
 
 $autoloaderPaths = [
-    __DIR__ . '/../../vendor/autoload.php',
+    dirname(__DIR__, 3) . '/autoload.php',
     __DIR__ . '/../vendor/autoload.php',
 ];
 
