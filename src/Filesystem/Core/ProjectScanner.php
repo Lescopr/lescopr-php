@@ -1,0 +1,116 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Lescopr\Filesystem\Core;
+
+/**
+ * Scans the project directory structure and reads key file contents.
+ * Mirrors Python's ProjectScanner.
+ */
+class ProjectScanner
+{
+    /** Directories to skip entirely */
+    private const IGNORED_DIRS = [
+        '.git', '.svn', '.hg', '.vscode', '.idea',
+        'node_modules', 'vendor', '__pycache__', '.pytest_cache',
+        'venv', '.venv', 'env', 'build', 'dist', 'target',
+        '.next', '.nuxt', '.cache', 'storage/framework',
+        'bootstrap/cache', 'coverage', 'tmp', 'temp',
+    ];
+
+    /** File prefixes to ignore */
+    private const IGNORED_PREFIXES = ['.', '~', '#'];
+
+    /** Key files whose content is worth reading for framework detection */
+    private const FILES_TO_ANALYZE = [
+        'composer.json', 'composer.lock',
+        'package.json',
+        'artisan', 'index.php',
+        'config/app.php', 'config/bundles.php',
+        'routes/web.php', 'routes/api.php',
+        'src/Kernel.php', 'bootstrap/app.php',
+        '.env', '.env.example',
+        'README.md', 'readme.md',
+        'Dockerfile', 'docker-compose.yml',
+    ];
+
+    /** Max file size to read (1 MB) */
+    private const MAX_FILE_SIZE = 1_048_576;
+
+    private string $rootPath;
+
+    public function __construct(string $rootPath)
+    {
+        $this->rootPath = rtrim($rootPath, '/');
+    }
+
+    /**
+     * Returns [projectTree, fileContents]
+     *
+     * @return array{0: array<string, list<string>>, 1: array<string, string>}
+     */
+    public function scanStructure(): array
+    {
+        $projectTree  = [];
+        $fileContents = [];
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveCallbackFilterIterator(
+                new \RecursiveDirectoryIterator(
+                    $this->rootPath,
+                    \RecursiveDirectoryIterator::SKIP_DOTS
+                ),
+                function (\SplFileInfo $file, string $key, \RecursiveDirectoryIterator $iterator): bool {
+                    if ($iterator->hasChildren() && in_array($file->getFilename(), self::IGNORED_DIRS, true)) {
+                        return false;
+                    }
+                    foreach (self::IGNORED_PREFIXES as $prefix) {
+                        if (str_starts_with($file->getFilename(), $prefix) && !$file->isDir()) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+            ),
+            \RecursiveIteratorIterator::SELF_FIRST
+        );
+
+        foreach ($iterator as $item) {
+            /** @var \SplFileInfo $item */
+            $relative = substr($item->getPathname(), strlen($this->rootPath) + 1);
+
+            if ($item->isDir()) {
+                $projectTree[$relative] = $projectTree[$relative] ?? [];
+            } elseif ($item->isFile()) {
+                $dir = dirname($relative);
+                $projectTree[$dir][] = $item->getFilename();
+
+                if ($this->shouldAnalyzeFile($item->getFilename(), $relative, $item->getSize())) {
+                    $content = @file_get_contents($item->getPathname());
+                    if ($content !== false && $content !== '') {
+                        $fileContents[$relative] = $content;
+                    }
+                }
+            }
+        }
+
+        return [$projectTree, $fileContents];
+    }
+
+    private function shouldAnalyzeFile(string $filename, string $relativePath, int $size): bool
+    {
+        if ($size > self::MAX_FILE_SIZE) {
+            return false;
+        }
+
+        foreach (self::FILES_TO_ANALYZE as $pattern) {
+            if ($filename === $pattern || $relativePath === $pattern || str_ends_with($relativePath, '/' . $pattern)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+

@@ -1,0 +1,23 @@
+# Lescopr SDK credentials — never commit these
+.lescopr.json
+.lescopr.log
+.lescopr.pid
+
+# Composer
+/vendor/
+composer.lock
+
+# PHPUnit
+.phpunit.result.cache
+.phpunit.cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
