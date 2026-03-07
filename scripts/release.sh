@@ -46,6 +46,7 @@ echo "✅  All tests pass."
 
 # ── Update CHANGELOG ──────────────────────────────────────────────────────────
 DATE=$(date +%Y-%m-%d)
+YEAR=$(date +%Y)
 echo "📝  Updating CHANGELOG.md: [Unreleased] → [$VERSION] — $DATE"
 
 # Replace the first occurrence of "## [Unreleased]" with the versioned header
@@ -60,9 +61,15 @@ sed -i '' \
   "s|^\[Unreleased\]: .*|\[Unreleased\]: https://github.com/Lescopr/lescopr-php/compare/v$VERSION...HEAD\n[$VERSION]: https://github.com/Lescopr/lescopr-php/releases/tag/v$VERSION|" \
   CHANGELOG.md
 
+# ── Update LICENSE year ───────────────────────────────────────────────────────
+echo "📄  Updating LICENSE year to 2024-$YEAR..."
+sed -i '' \
+  "s/Copyright (c) 2024-[0-9]*/Copyright (c) 2024-$YEAR/" \
+  LICENSE
+
 # ── Commit & tag ──────────────────────────────────────────────────────────────
 echo "🔖  Committing and tagging v$VERSION..."
-git add CHANGELOG.md
+git add CHANGELOG.md LICENSE
 git commit -m "chore: release v$VERSION"
 git tag -a "v$VERSION" -m "Release v$VERSION"
 

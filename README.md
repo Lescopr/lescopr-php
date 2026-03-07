@@ -1,6 +1,7 @@
 # Lescopr PHP SDK
 
-[![Packagist](https://img.shields.io/packagist/v/lescopr/lescopr-php.svg)](https://packagist.org/packages/lescopr/lescopr-php)
+[![Packagist Version](https://img.shields.io/packagist/v/lescopr/lescopr-php.svg)](https://packagist.org/packages/lescopr/lescopr-php)
+[![Packagist Downloads](https://img.shields.io/packagist/dt/lescopr/lescopr-php.svg)](https://packagist.org/packages/lescopr/lescopr-php)
 [![PHP versions](https://img.shields.io/packagist/php-v/lescopr/lescopr-php.svg)](https://packagist.org/packages/lescopr/lescopr-php)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -23,7 +24,7 @@ Works out of the box with **Laravel**, **Symfony**, and **vanilla PHP / custom O
 - [Architecture](#architecture)
 - [CLI Reference](#cli-reference)
 - [Advanced Configuration](#advanced-configuration)
-- [Publishing to Packagist](#publishing-to-packagist)
+- [Packagist](#packagist)
 - [License](#license)
 
 ---
@@ -44,11 +45,14 @@ Works out of the box with **Laravel**, **Symfony**, and **vanilla PHP / custom O
 
 | Requirement | Version |
 |---|---|
-| PHP | ≥ 8.1 |
+| PHP | ≥ 7.4 |
 | Composer | ≥ 2.0 |
-| ext-pcntl | Recommended (for daemon) |
-| ext-posix | Recommended (for daemon) |
-| ext-openssl | Recommended (for HTTPS) |
+| `guzzlehttp/guzzle` | `^6.5 \|\| ^7.0` |
+| `symfony/console` | `^4.4 \|\| ^5.0 \|\| ^6.0 \|\| ^7.0` |
+| `ext-json` | bundled with PHP |
+| `ext-pcntl` | Recommended (for daemon) |
+| `ext-posix` | Recommended (for daemon) |
+| `ext-openssl` | Recommended (for HTTPS) |
 
 > **Note:** `ext-pcntl` is not available on Windows. On those environments the SDK operates in direct HTTP mode (no background daemon).
 
@@ -306,18 +310,20 @@ Prints PHP environment, configuration validity, daemon state, and optionally tes
 
 ---
 
-## Publishing to Packagist
+## Packagist
+
+The package is available on Packagist: **[lescopr/lescopr-php](https://packagist.org/packages/lescopr/lescopr-php)**
+
+To publish a new release, use the automated release script:
 
 ```bash
-# Install build tools
-composer install
-
-# Tag a release
-git tag v0.1.0
-git push origin v0.1.0
+# From the sdk/php directory
+./scripts/release.sh 0.2.0
 ```
 
-Then connect your GitHub repository to [packagist.org](https://packagist.org) and submit the package URL.
+This will update `CHANGELOG.md`, commit, tag and push — GitHub Actions will create the GitHub Release and notify Packagist automatically.
+
+For the full publishing guide (Symfony Flex recipe, Laravel News, SemVer rules), see [PUBLISHING.md](PUBLISHING.md).
 
 ---
 
@@ -333,5 +339,5 @@ Then connect your GitHub repository to [packagist.org](https://packagist.org) an
 
 ## License
 
-[MIT](LICENSE) © 2026 SonnaLab Ltd. All rights reserved.
+[MIT](LICENSE) © 2024-present [SonnaLab](https://sonnalab.com). All rights reserved.
 
