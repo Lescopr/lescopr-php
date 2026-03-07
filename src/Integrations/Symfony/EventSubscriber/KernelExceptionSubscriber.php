@@ -23,7 +23,13 @@ use Symfony\Component\HttpKernel\KernelEvents;
  */
 class KernelExceptionSubscriber implements EventSubscriberInterface
 {
-    public function __construct(private readonly Lescopr $sdk) {}
+    /** @var Lescopr */
+    private $sdk;
+
+    public function __construct(Lescopr $sdk)
+    {
+        $this->sdk = $sdk;
+    }
 
     public static function getSubscribedEvents(): array
     {
@@ -50,7 +56,7 @@ class KernelExceptionSubscriber implements EventSubscriberInterface
                     'source'         => 'symfony_kernel_exception',
                 ]
             );
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
             // Never throw from an event subscriber
         }
     }

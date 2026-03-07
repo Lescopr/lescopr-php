@@ -92,7 +92,7 @@ class Lescopr
         }
         try {
             return json_decode(file_get_contents($configFile), true, 512, JSON_THROW_ON_ERROR) ?? [];
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
             return [];
         }
     }
@@ -106,7 +106,7 @@ class Lescopr
                 json_encode($config, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE)
             );
             return true;
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
             return false;
         }
     }
@@ -396,7 +396,7 @@ class Lescopr
                 ]
             );
             return $response['ok'] ?? false;
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
             $this->addPendingLog([
                 'level'     => $level,
                 'message'   => $message,

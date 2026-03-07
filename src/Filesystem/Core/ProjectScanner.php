@@ -6,7 +6,7 @@ namespace Lescopr\Filesystem\Core;
 
 /**
  * Scans the project directory structure and reads key file contents.
- * Mirrors Python's ProjectScanner.
+ * Compatible with PHP 7.4+.
  */
 class ProjectScanner
 {
@@ -36,9 +36,10 @@ class ProjectScanner
     ];
 
     /** Max file size to read (1 MB) */
-    private const MAX_FILE_SIZE = 1_048_576;
+    private const MAX_FILE_SIZE = 1048576;
 
-    private string $rootPath;
+    /** @var string */
+    private $rootPath;
 
     public function __construct(string $rootPath)
     {
@@ -54,6 +55,8 @@ class ProjectScanner
     {
         $projectTree  = [];
         $fileContents = [];
+        $rootPath     = $this->rootPath;
+        $ignoredDirs  = self::IGNORED_DIRS;
 
         $iterator = new \RecursiveIteratorIterator(
             new \RecursiveCallbackFilterIterator(
@@ -61,13 +64,15 @@ class ProjectScanner
                     $this->rootPath,
                     \RecursiveDirectoryIterator::SKIP_DOTS
                 ),
-                function (\SplFileInfo $file, string $key, \RecursiveDirectoryIterator $iterator): bool {
-                    if ($iterator->hasChildren() && in_array($file->getFilename(), self::IGNORED_DIRS, true)) {
+                function (\SplFileInfo $file, $key, \RecursiveDirectoryIterator $iterator) use ($ignoredDirs) {
+                    if ($iterator->hasChildren() && in_array($file->getFilename(), $ignoredDirs, true)) {
                         return false;
                     }
-                    foreach (self::IGNORED_PREFIXES as $prefix) {
-                        if (str_starts_with($file->getFilename(), $prefix) && !$file->isDir()) {
-                            return false;
+                    if (!$file->isDir()) {
+                        foreach (self::IGNORED_PREFIXES as $prefix) {
+                            if (strpos($file->getFilename(), $prefix) === 0) {
+                                return false;
+                            }
                         }
                     }
                     return true;
@@ -81,9 +86,14 @@ class ProjectScanner
             $relative = substr($item->getPathname(), strlen($this->rootPath) + 1);
 
             if ($item->isDir()) {
-                $projectTree[$relative] = $projectTree[$relative] ?? [];
+                if (!isset($projectTree[$relative])) {
+                    $projectTree[$relative] = [];
+                }
             } elseif ($item->isFile()) {
                 $dir = dirname($relative);
+                if (!isset($projectTree[$dir])) {
+                    $projectTree[$dir] = [];
+                }
                 $projectTree[$dir][] = $item->getFilename();
 
                 if ($this->shouldAnalyzeFile($item->getFilename(), $relative, $item->getSize())) {
@@ -105,7 +115,11 @@ class ProjectScanner
         }
 
         foreach (self::FILES_TO_ANALYZE as $pattern) {
-            if ($filename === $pattern || $relativePath === $pattern || str_ends_with($relativePath, '/' . $pattern)) {
+            if (
+                $filename === $pattern
+                || $relativePath === $pattern
+                || substr($relativePath, -strlen('/' . $pattern)) === '/' . $pattern
+            ) {
                 return true;
             }
         }

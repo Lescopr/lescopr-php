@@ -333,5 +333,5 @@ Then connect your GitHub repository to [packagist.org](https://packagist.org) an
 
 ## License
 
-[MIT](LICENSE) © 2024 SonnaLabs
+[MIT](LICENSE) © 2026 SonnaLab Ltd. All rights reserved.
 

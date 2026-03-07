@@ -52,7 +52,7 @@ class HttpClient
 
             try {
                 $decoded = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
-            } catch (\Throwable) {
+            } catch (\Throwable $e) {
                 $decoded = ['raw' => $raw];
             }
 
@@ -94,7 +94,7 @@ class HttpClient
 
             try {
                 $decoded = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
-            } catch (\Throwable) {
+            } catch (\Throwable $e) {
                 $decoded = ['raw' => $raw];
             }
 

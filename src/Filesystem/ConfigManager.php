@@ -39,7 +39,7 @@ class ConfigManager
             }
             $data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
             return is_array($data) ? $data : [];
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
             return [];
         }
     }
@@ -54,7 +54,7 @@ class ConfigManager
             $json  = json_encode($final, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
             file_put_contents($this->configFile, $json, LOCK_EX);
             return true;
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
             return false;
         }
     }

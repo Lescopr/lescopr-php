@@ -13,10 +13,16 @@ use Lescopr\Core\Lescopr;
  */
 class LescoprExceptionHandler implements ExceptionHandler
 {
-    public function __construct(
-        private readonly ExceptionHandler $inner,
-        private readonly Lescopr $sdk
-    ) {}
+    /** @var ExceptionHandler */
+    private $inner;
+    /** @var Lescopr */
+    private $sdk;
+
+    public function __construct(ExceptionHandler $inner, Lescopr $sdk)
+    {
+        $this->inner = $inner;
+        $this->sdk   = $sdk;
+    }
 
     public function report(\Throwable $e): void
     {
@@ -28,7 +34,7 @@ class LescoprExceptionHandler implements ExceptionHandler
                 'trace'          => $e->getTraceAsString(),
                 'source'         => 'laravel_exception_handler',
             ]);
-        } catch (\Throwable) {}
+        } catch (\Throwable $e) {}
 
         $this->inner->report($e);
     }

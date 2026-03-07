@@ -6,41 +6,39 @@ namespace Lescopr\Integrations\Symfony;
 
 use Lescopr\Core\Lescopr;
 use Monolog\Handler\AbstractProcessingHandler;
-use Monolog\Level;
-use Monolog\LogRecord;
+use Monolog\Logger;
 
 /**
- * Monolog handler for Symfony — identical to the Laravel one but lives
- * in the Symfony namespace so it can be wired via services.yaml independently.
- *
- * config/packages/monolog.yaml:
- *   monolog:
- *     handlers:
- *       lescopr:
- *         type: service
- *         id: Lescopr\Integrations\Symfony\LescoprMonologHandler
+ * Monolog handler for Symfony.
+ * Compatible with Monolog 1.x, 2.x, 3.x and PHP 7.4+.
  */
 class LescoprMonologHandler extends AbstractProcessingHandler
 {
     private const IGNORED_CHANNELS = ['lescopr', 'security'];
 
-    public function __construct(
-        private readonly Lescopr $sdk,
-        int|Level $level = Level::Debug,
-        bool $bubble = true
-    ) {
+    /** @var Lescopr */
+    private $sdk;
+
+    public function __construct(Lescopr $sdk, int $level = Logger::DEBUG, bool $bubble = true)
+    {
         parent::__construct($level, $bubble);
+        $this->sdk = $sdk;
     }
 
-    protected function write(array|LogRecord $record): void
+    /**
+     * @param array<string, mixed>|object $record
+     */
+    protected function write($record): void
     {
         try {
-            if ($record instanceof LogRecord) {
-                $channel   = $record->channel;
-                $levelName = $record->level->getName();
-                $message   = $record->message;
-                $context   = $record->context;
-                $datetime  = $record->datetime;
+            if (is_object($record)) {
+                $channel   = $record->channel  ?? 'app';           // @phpstan-ignore-line
+                $levelName = method_exists($record->level ?? null, 'getName') // @phpstan-ignore-line
+                    ? $record->level->getName()                     // @phpstan-ignore-line
+                    : ($record->level ?? 'INFO');                   // @phpstan-ignore-line
+                $message   = $record->message  ?? '';              // @phpstan-ignore-line
+                $context   = (array) ($record->context ?? []);     // @phpstan-ignore-line
+                $datetime  = $record->datetime ?? new \DateTimeImmutable(); // @phpstan-ignore-line
             } else {
                 $channel   = $record['channel']    ?? 'app';
                 $levelName = $record['level_name'] ?? 'INFO';
@@ -50,12 +48,12 @@ class LescoprMonologHandler extends AbstractProcessingHandler
             }
 
             foreach (self::IGNORED_CHANNELS as $ignored) {
-                if (str_contains(strtolower($channel), $ignored)) {
+                if (strpos(strtolower((string) $channel), $ignored) !== false) {
                     return;
                 }
             }
 
-            $this->sdk->sendLog($levelName, $message, [
+            $this->sdk->sendLog((string) $levelName, (string) $message, [
                 'channel'   => $channel,
                 'context'   => $context,
                 'timestamp' => $datetime instanceof \DateTimeInterface
@@ -63,7 +61,6 @@ class LescoprMonologHandler extends AbstractProcessingHandler
                     : date(\DateTime::ATOM),
                 'source' => 'symfony_monolog',
             ]);
-        } catch (\Throwable) {}
+        } catch (\Throwable $e) {}
     }
 }
-

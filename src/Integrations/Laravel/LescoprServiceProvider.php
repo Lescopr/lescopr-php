@@ -88,7 +88,7 @@ class LescoprServiceProvider extends ServiceProvider
 
             $handler = new LescoprMonologHandler($sdk);
             $monolog->pushHandler($handler);
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
             // Logging not yet bootstrapped or Monolog not available
         }
     }
@@ -121,7 +121,7 @@ class LescoprServiceProvider extends ServiceProvider
                         return new LescoprExceptionHandler($originalHandler, $sdk);
                     }
                 );
-            } catch (\Throwable) {}
+            } catch (\Throwable $e) {}
         }
     }
 }

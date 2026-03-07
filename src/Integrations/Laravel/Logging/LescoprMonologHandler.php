@@ -6,69 +6,72 @@ namespace Lescopr\Integrations\Laravel\Logging;
 
 use Lescopr\Core\Lescopr;
 use Monolog\Handler\AbstractProcessingHandler;
-use Monolog\Level;
-use Monolog\LogRecord;
+use Monolog\Logger;
 
 /**
  * Monolog handler that forwards every log record to Lescopr.
- *
- * Works with both Monolog 2.x (array $record) and 3.x (LogRecord $record).
+ * Compatible with Monolog 1.x, 2.x, 3.x and PHP 7.4+.
  */
 class LescoprMonologHandler extends AbstractProcessingHandler
 {
-    private Lescopr $sdk;
+    /** @var Lescopr */
+    private $sdk;
 
     /** Loggers whose output we never forward (avoid infinite loops) */
     private const IGNORED_CHANNELS = ['lescopr', 'grpc', 'protobuf'];
 
-    public function __construct(Lescopr $sdk, int|Level $level = Level::Debug, bool $bubble = true)
+    /**
+     * @param int $level Monolog level constant (Logger::DEBUG etc.)
+     */
+    public function __construct(Lescopr $sdk, int $level = Logger::DEBUG, bool $bubble = true)
     {
         parent::__construct($level, $bubble);
         $this->sdk = $sdk;
     }
 
     /**
-     * @param array<string, mixed>|LogRecord $record
+     * Works with Monolog 1.x/2.x (array) and 3.x (LogRecord).
+     *
+     * @param array<string, mixed>|object $record
      */
-    protected function write(array|LogRecord $record): void
+    protected function write($record): void
     {
         try {
-            // Monolog 3.x uses LogRecord, 2.x uses array
-            if ($record instanceof LogRecord) {
-                $channel   = $record->channel;
-                $levelName = $record->level->getName();
-                $message   = $record->message;
-                $context   = $record->context;
-                $datetime  = $record->datetime;
-                $extra     = $record->extra;
+            // Monolog 3.x uses LogRecord object; 1.x/2.x use plain array
+            if (is_object($record)) {
+                $channel   = $record->channel  ?? 'app';           // @phpstan-ignore-line
+                $levelName = method_exists($record->level, 'getName') // @phpstan-ignore-line
+                    ? $record->level->getName()                        // @phpstan-ignore-line
+                    : ($record->level ?? 'INFO');                      // @phpstan-ignore-line
+                $message   = $record->message  ?? '';              // @phpstan-ignore-line
+                $context   = (array) ($record->context  ?? []);    // @phpstan-ignore-line
+                $datetime  = $record->datetime ?? new \DateTimeImmutable(); // @phpstan-ignore-line
             } else {
-                $channel   = $record['channel']  ?? 'app';
+                $channel   = $record['channel']    ?? 'app';
                 $levelName = $record['level_name'] ?? 'INFO';
-                $message   = $record['message']   ?? '';
-                $context   = $record['context']   ?? [];
-                $datetime  = $record['datetime']  ?? new \DateTimeImmutable();
-                $extra     = $record['extra']      ?? [];
+                $message   = $record['message']    ?? '';
+                $context   = $record['context']    ?? [];
+                $datetime  = $record['datetime']   ?? new \DateTimeImmutable();
             }
 
             // Skip internal SDK logs
             foreach (self::IGNORED_CHANNELS as $ignored) {
-                if (str_contains(strtolower($channel), $ignored)) {
+                if (strpos(strtolower((string) $channel), $ignored) !== false) {
                     return;
                 }
             }
 
-            $metadata = [
+            $timestamp = $datetime instanceof \DateTimeInterface
+                ? $datetime->format(\DateTime::ATOM)
+                : date(\DateTime::ATOM);
+
+            $this->sdk->sendLog((string) $levelName, (string) $message, [
                 'channel'   => $channel,
                 'context'   => $context,
-                'extra'     => $extra,
-                'timestamp' => $datetime instanceof \DateTimeInterface
-                    ? $datetime->format(\DateTime::ATOM)
-                    : date(\DateTime::ATOM),
+                'timestamp' => $timestamp,
                 'source'    => 'laravel_monolog',
-            ];
-
-            $this->sdk->sendLog($levelName, $message, $metadata);
-        } catch (\Throwable) {
+            ]);
+        } catch (\Throwable $e) {
             // Never throw from a log handler
         }
     }

@@ -69,7 +69,7 @@ class ProjectAnalyzer
                         $parts = explode('/', $data['name']);
                         return end($parts);
                     }
-                } catch (\Throwable) {}
+                } catch (\Throwable $e) {}
             }
         }
 
@@ -81,7 +81,7 @@ class ProjectAnalyzer
                     if (isset($data['name']) && is_string($data['name'])) {
                         return $data['name'];
                     }
-                } catch (\Throwable) {}
+                } catch (\Throwable $e) {}
             }
         }
 
@@ -160,12 +160,16 @@ class ProjectAnalyzer
 
     private function categorizeSize(int $totalFiles): string
     {
-        return match (true) {
-            $totalFiles < 10  => 'small',
-            $totalFiles < 50  => 'medium',
-            $totalFiles < 200 => 'large',
-            default           => 'very_large',
-        };
+        if ($totalFiles < 10) {
+            return 'small';
+        }
+        if ($totalFiles < 50) {
+            return 'medium';
+        }
+        if ($totalFiles < 200) {
+            return 'large';
+        }
+        return 'very_large';
     }
 }
 

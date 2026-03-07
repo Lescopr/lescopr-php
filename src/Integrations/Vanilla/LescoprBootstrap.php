@@ -140,7 +140,7 @@ class LescoprBootstrap
                     'line'      => $errline,
                     'source'    => 'php_error_handler',
                 ]);
-            } catch (\Throwable) {}
+            } catch (\Throwable $e) {}
 
             // Return false to let the standard PHP error handler continue
             return false;
@@ -158,7 +158,7 @@ class LescoprBootstrap
                     'trace'          => $exception->getTraceAsString(),
                     'source'         => 'php_exception_handler',
                 ]);
-            } catch (\Throwable) {}
+            } catch (\Throwable $e) {}
         });
     }
 
@@ -174,7 +174,7 @@ class LescoprBootstrap
                         'line'       => $error['line'],
                         'source'     => 'php_shutdown_handler',
                     ]);
-                } catch (\Throwable) {}
+                } catch (\Throwable $e) {}
             }
         });
     }

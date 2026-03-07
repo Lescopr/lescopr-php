@@ -6,9 +6,7 @@ namespace Lescopr\Filesystem\Analyzers;
 
 /**
  * Detects PHP frameworks from project files.
- *
- * Mirrors Python's FrameworkAnalyzer — uses a pattern registry
- * to score each framework and return those above 50% confidence.
+ * Compatible with PHP 7.4+.
  */
 class FrameworkAnalyzer
 {
@@ -152,7 +150,11 @@ class FrameworkAnalyzer
         foreach ($requiredFiles as $required) {
             $found = false;
             foreach (array_keys($fileContents) as $path) {
-                if (str_ends_with($path, '/' . $required) || $path === $required || basename($path) === $required) {
+                if (
+                    substr($path, -strlen('/' . $required)) === '/' . $required
+                    || $path === $required
+                    || basename($path) === $required
+                ) {
                     $found = true;
                     break;
                 }
@@ -175,7 +177,7 @@ class FrameworkAnalyzer
             foreach ($matchingFiles as $path) {
                 $content = $fileContents[$path] ?? '';
                 foreach ($patterns as $pattern) {
-                    if (str_contains($content, $pattern)) {
+                    if (strpos($content, $pattern) !== false) {
                         return true;
                     }
                 }
@@ -192,7 +194,11 @@ class FrameworkAnalyzer
     {
         foreach ($optionalFiles as $optional) {
             foreach (array_keys($fileContents) as $path) {
-                if (str_ends_with($path, '/' . $optional) || $path === $optional || basename($path) === $optional) {
+                if (
+                    substr($path, -strlen('/' . $optional)) === '/' . $optional
+                    || $path === $optional
+                    || basename($path) === $optional
+                ) {
                     return true;
                 }
             }
@@ -206,14 +212,17 @@ class FrameworkAnalyzer
      */
     private function findMatchingFiles(string $fileGlob, array $fileContents): array
     {
-        if (str_starts_with($fileGlob, '*')) {
+        if (strpos($fileGlob, '*') === 0) {
             $suffix = substr($fileGlob, 1);
-            return array_filter(array_keys($fileContents), fn($p) => str_ends_with($p, $suffix));
+            return array_values(array_filter(array_keys($fileContents), function ($p) use ($suffix) {
+                return substr($p, -strlen($suffix)) === $suffix;
+            }));
         }
-        return array_filter(
-            array_keys($fileContents),
-            fn($p) => str_ends_with($p, '/' . $fileGlob) || $p === $fileGlob || basename($p) === $fileGlob
-        );
+        return array_values(array_filter(array_keys($fileContents), function ($p) use ($fileGlob) {
+            return substr($p, -strlen('/' . $fileGlob)) === '/' . $fileGlob
+                || $p === $fileGlob
+                || basename($p) === $fileGlob;
+        }));
     }
 
     /**
@@ -235,7 +244,7 @@ class FrameworkAnalyzer
         }
         // Minimal PHP project
         foreach (array_keys($fileContents) as $path) {
-            if (str_ends_with($path, '.php')) {
+            if (substr($path, -4) === '.php') {
                 return [[
                     'name'              => 'poo',
                     'parent_stack_type' => 'php',
