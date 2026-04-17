@@ -20,7 +20,7 @@ use Lescopr\Modes\DirectMode;
 class Lescopr
 {
     public const BASE_URL    = 'https://api.lescopr.com/api/v1';
-    public const SDK_VERSION = '1.1.1';
+    public const SDK_VERSION = '1.2.0';
     public const VALID_ENVIRONMENTS = ['development', 'production'];
 
     private ?string $apiKey;
