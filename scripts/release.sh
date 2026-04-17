@@ -32,16 +32,20 @@ SDK_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 cd "$SDK_DIR"
 
-# ── Check git is clean (scope : ce répertoire SDK uniquement) ───────────────
+# ── Check git is clean ────────────────────────────────────────────────────────
 if [[ -n "$(git status --porcelain .)" ]]; then
   echo "❌  Working tree is not clean. Commit or stash your changes first."
   git status --short .
   exit 1
 fi
 
-# ── Update SDK_VERSION constant ──────────────────────────────────────
-echo "📦  Updating SDK_VERSION to $VERSION..."
-sed -i '' "s/SDK_VERSION = '[^']*'/SDK_VERSION = '$VERSION'/" src/Core/Lescopr.php
+# ── Update SDK_VERSION constant ───────────────────────────────────────────────
+echo "📦  Updating SDK_VERSION to $VERSION in src/Core/Lescopr.php..."
+sed -i '' "s/public const SDK_VERSION = '.*';/public const SDK_VERSION = '$VERSION';/" \
+  src/Core/Lescopr.php
+
+# ── Run tests ─────────────────────────────────────────────────────────────────
+echo "🧪  Running tests..."
 LESCOPR_DAEMON_MODE=true composer test:ci
 echo "✅  All tests pass."
 
