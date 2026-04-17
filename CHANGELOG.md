@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.2] — 2026-04-17
+
+---
+
 ## [1.0.0] — 2026-04-17
 
 ---
@@ -58,6 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/Lescopr/lescopr-php/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/Lescopr/lescopr-php/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/Lescopr/lescopr-php/releases/tag/v1.0.2
 [1.0.0]: https://github.com/Lescopr/lescopr-php/releases/tag/v1.0.0
 [1.0.0]: https://github.com/Lescopr/lescopr-php/releases/tag/v1.0.0
