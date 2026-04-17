@@ -39,8 +39,9 @@ if [[ -n "$(git status --porcelain .)" ]]; then
   exit 1
 fi
 
-# ── Run tests ─────────────────────────────────────────────────────────────────
-echo "🧪  Running tests..."
+# ── Update SDK_VERSION constant ──────────────────────────────────────
+echo "📦  Updating SDK_VERSION to $VERSION..."
+sed -i '' "s/SDK_VERSION = '[^']*'/SDK_VERSION = '$VERSION'/" src/Core/Lescopr.php
 LESCOPR_DAEMON_MODE=true composer test:ci
 echo "✅  All tests pass."
 
@@ -69,7 +70,7 @@ sed -i '' \
 
 # ── Commit & tag ──────────────────────────────────────────────────────────────
 echo "🔖  Committing and tagging v$VERSION..."
-git add CHANGELOG.md LICENSE
+git add CHANGELOG.md LICENSE src/Core/Lescopr.php
 git commit -m "chore: release v$VERSION"
 git tag -a "v$VERSION" -m "Release v$VERSION"
 
