@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [1.0.0] — 2026-04-17
+
 ### Added
 - **Modes** — nouveau module `src/Modes/` pour configurer finement le comportement du SDK (silent, verbose, strict)
 - **Makefile** — workflow de release simplifié (`bump-patch`, `bump-minor`, `bump-major`, `release V=x.y.z`, `test`, `tag`, `push`)
@@ -61,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/Lescopr/lescopr-php/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Lescopr/lescopr-php/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/Lescopr/lescopr-php/releases/tag/v1.0.0
 [0.1.0]: https://github.com/Lescopr/lescopr-php/releases/tag/v0.1.0
 
