@@ -78,9 +78,9 @@ class Lescopr
      * Usage (e.g. top of index.php or bootstrap.php):
      *   \Lescopr\Core\Lescopr::logs();
      *
-     * @return static|null
+     * @return self|null
      */
-    public static function logs(): ?static
+    public static function logs(): ?self
     {
         $config = static::loadProjectConfig();
         if (empty($config) || empty($config['sdk_key'])) {
@@ -88,11 +88,11 @@ class Lescopr
         }
 
         $instance = new static(
-            apiKey:      $config['api_key']      ?? null,
-            sdkKey:      $config['sdk_key']      ?? null,
-            environment: $config['environment']  ?? 'development',
-            autoLogging: false,
-            autoHttp:    false,
+            $config['api_key']      ?? null,
+            $config['sdk_key']      ?? null,
+            $config['environment']  ?? 'development',
+            false,
+            false
         );
         $instance->sdkId        = $config['sdk_id']        ?? null;
         $instance->projectName  = $config['project_name']  ?? null;
@@ -105,9 +105,9 @@ class Lescopr
         if ($mode === 'direct' || $mode === 'embedded') {
             $baseUrl = (string) (getenv('LESCOPR_API_URL') ?: static::BASE_URL);
             $instance->directMode = new DirectMode(
-                sdkKey:  $config['sdk_key'],
-                apiKey:  $config['api_key'] ?? '',
-                baseUrl: $baseUrl,
+                $config['sdk_key'],
+                $config['api_key'] ?? '',
+                $baseUrl
             );
             $instance->directMode->start();
         }
