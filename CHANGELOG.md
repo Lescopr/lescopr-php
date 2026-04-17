@@ -9,32 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
----
-
-## [1.2.0] — 2026-04-17
-
----
-
-## [1.2.0] — 2026-04-17
-
----
-
-## [1.0.0] — 2026-04-17
-
-### Added
-- **Modes** — nouveau module `src/Modes/` pour configurer finement le comportement du SDK (silent, verbose, strict)
-- **Makefile** — workflow de release simplifié (`bump-patch`, `bump-minor`, `bump-major`, `release V=x.y.z`, `test`, `tag`, `push`)
-
-### Changed
-- `src/Core/Lescopr.php` — intégration des modes et mise à jour de `SDK_VERSION`
-
-### Fixed
-- Script de release : vérification de l'arbre git limitée au répertoire PHP (`git status --porcelain .`) pour éviter les faux positifs dans les setups monorepo
-
----
-
-## [0.1.0] — 2026-03-07
-
 ### Added
 - **Core SDK** (`Lescopr\Core\Lescopr`) — central object handling config, log queue, and daemon lifecycle
 - **Background daemon** (`DaemonRunner`) — `pcntl_fork` process that flushes logs to `api.lescopr.com` every 5 s with heartbeat every 30 s; graceful fallback to synchronous HTTP when `pcntl` is unavailable
@@ -42,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Framework auto-detection** (`FrameworkAnalyzer`) — detects Laravel, Symfony, Lumen, Slim, CodeIgniter and vanilla PHP/POO from `composer.json` with confidence scoring
 - **Project analyzer** (`ProjectAnalyzer`) — full project scan producing the payload for `POST /api/v1/sdk/verify/`
 - **Config manager** (`ConfigManager`) — thread-safe read/write of `.lescopr.json`
+- **Modes** — new `src/Modes/` module (`Detector`, `DirectMode`) for runtime mode detection and direct HTTP delivery
+- **`Lescopr::logs()`** — zero-config static bootstrap: loads `.lescopr.json`, detects mode, starts monitoring in one call
 - **Laravel integration**
   - `LescoprServiceProvider` — auto-registered via Composer package discovery
   - `LescoprMonologHandler` — Monolog 1/2/3 compatible handler
@@ -59,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Test suite** — 20 unit tests, 52 assertions (PHPUnit 9/10/11)
 - **PHP 7.4+ compatibility** — no PHP 8.0+ syntax; works on PHP 7.4, 8.0, 8.1, 8.2, 8.3
 - **Packagist ready** — `composer.json` with Laravel auto-discovery, keywords, support links
+- **Makefile** — simplified release workflow (`bump-patch`, `bump-minor`, `bump-major`, `release V=x.y.z`, `test`, `tag`, `push`)
 
 ### Compatibility matrix
 
@@ -73,9 +50,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/Lescopr/lescopr-php/compare/v1.2.0...HEAD
-[1.2.0]: https://github.com/Lescopr/lescopr-php/releases/tag/v1.2.0
-[1.2.0]: https://github.com/Lescopr/lescopr-php/releases/tag/v1.2.0
-[1.0.0]: https://github.com/Lescopr/lescopr-php/releases/tag/v1.0.0
-[0.1.0]: https://github.com/Lescopr/lescopr-php/releases/tag/v0.1.0
-
+[Unreleased]: https://github.com/Lescopr/lescopr-php/compare/main...HEAD
