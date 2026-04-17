@@ -32,10 +32,10 @@ SDK_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 cd "$SDK_DIR"
 
-# ── Check git is clean ────────────────────────────────────────────────────────
-if [[ -n "$(git status --porcelain)" ]]; then
+# ── Check git is clean (scope : ce répertoire SDK uniquement) ───────────────
+if [[ -n "$(git status --porcelain .)" ]]; then
   echo "❌  Working tree is not clean. Commit or stash your changes first."
-  git status --short
+  git status --short .
   exit 1
 fi
 

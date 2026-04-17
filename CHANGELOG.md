@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Modes** — nouveau module `src/Modes/` pour configurer finement le comportement du SDK (silent, verbose, strict)
+- **Makefile** — workflow de release simplifié (`bump-patch`, `bump-minor`, `bump-major`, `release V=x.y.z`, `test`, `tag`, `push`)
+
+### Changed
+- `src/Core/Lescopr.php` — intégration des modes et mise à jour de `SDK_VERSION`
+
+### Fixed
+- Script de release : vérification de l'arbre git limitée au répertoire PHP (`git status --porcelain .`) pour éviter les faux positifs dans les setups monorepo
+
 ---
 
 ## [0.1.0] — 2026-03-07

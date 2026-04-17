@@ -5,7 +5,7 @@
 [![PHP versions](https://img.shields.io/packagist/php-v/lescopr/lescopr-php.svg)](https://packagist.org/packages/lescopr/lescopr-php)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Lescopr** is a zero-configuration PHP monitoring SDK that automatically captures logs, errors, and exceptions from any PHP project and streams them in real-time to the [Lescopr dashboard](https://app.lescopr.com).
+**Lescopr** is a zero-configuration PHP monitoring SDK that automatically captures logs, errors, and exceptions from any PHP project and streams them in real-time to the [Lescopr app](https://app.lescopr.com).
 
 Works out of the box with **Laravel**, **Symfony**, and **vanilla PHP / custom OOP** projects.
 
@@ -78,7 +78,7 @@ This auto-detects your framework, registers the project with the Lescopr API, wr
 
 **Step 2 — Integrate into your application** (see [Framework Integration](#framework-integration) below).
 
-**That's it.** All logs and exceptions are forwarded to the Lescopr dashboard automatically.
+**That's it.** All logs and exceptions are forwarded to the Lescopr app automatically.
 
 ---
 
@@ -223,7 +223,7 @@ Your PHP Application
      https://api.lescopr.com
                │
                ▼
-     Lescopr Dashboard
+     Lescopr App
   https://app.lescopr.com
 ```
 
@@ -331,8 +331,8 @@ For the full publishing guide (Symfony Flex recipe, Laravel News, SemVer rules),
 
 | Channel | Link |
 |---|---|
-| 📖 Documentation | <https://docs.lescopr.com> |
-| 🌐 Dashboard | <https://app.lescopr.com> |
+| 📖 Documentation | <https://lescopr.com/docs> |
+| 🌐 App | <https://app.lescopr.com> |
 | 📧 Email | <support@lescopr.com> |
 
 ---

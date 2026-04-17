@@ -8,6 +8,8 @@ use Lescopr\Filesystem\ConfigManager;
 use Lescopr\Filesystem\Analyzers\ProjectAnalyzer;
 use Lescopr\Network\HttpClient;
 use Lescopr\Monitoring\Logger;
+use Lescopr\Modes\Detector;
+use Lescopr\Modes\DirectMode;
 
 /**
  * Lescopr Core SDK - Central management object
@@ -39,6 +41,10 @@ class Lescopr
     private bool $autoLogging;
     private bool $autoHttp;
 
+    /** @var 'direct'|'embedded'|null */
+    private ?string $mode = null;
+    private ?DirectMode $directMode = null;
+
     public function __construct(
         ?string $apiKey      = null,
         ?string $sdkKey      = null,
@@ -60,6 +66,53 @@ class Lescopr
         if ($autoLogging && $autoHttp && $this->sdkId) {
             $this->setupAutoLogging();
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Zero-config bootstrap (mirrors Python lescopr.logs())
+    // -------------------------------------------------------------------------
+
+    /**
+     * Zero-config init — load .lescopr/config.json and auto-detect mode.
+     *
+     * Usage (e.g. top of index.php or bootstrap.php):
+     *   \Lescopr\Core\Lescopr::logs();
+     *
+     * @return static|null
+     */
+    public static function logs(): ?static
+    {
+        $config = static::loadProjectConfig();
+        if (empty($config) || empty($config['sdk_key'])) {
+            return null;
+        }
+
+        $instance = new static(
+            apiKey:      $config['api_key']      ?? null,
+            sdkKey:      $config['sdk_key']      ?? null,
+            environment: $config['environment']  ?? 'development',
+            autoLogging: false,
+            autoHttp:    false,
+        );
+        $instance->sdkId        = $config['sdk_id']        ?? null;
+        $instance->projectName  = $config['project_name']  ?? null;
+        $instance->projectStack = $config['project_stack'] ?? [];
+
+        $mode = Detector::detect();
+        $instance->mode = $mode;
+        Logger::info("[LESCOPR] Mode détecté: {$mode}");
+
+        if ($mode === 'direct' || $mode === 'embedded') {
+            $baseUrl = (string) (getenv('LESCOPR_API_URL') ?: static::BASE_URL);
+            $instance->directMode = new DirectMode(
+                sdkKey:  $config['sdk_key'],
+                apiKey:  $config['api_key'] ?? '',
+                baseUrl: $baseUrl,
+            );
+            $instance->directMode->start();
+        }
+
+        return $instance;
     }
 
     // -------------------------------------------------------------------------
@@ -378,6 +431,19 @@ class Lescopr
 
     public function sendLog(string $level, string $message, array $metadata = []): bool
     {
+        // Direct / embedded mode: queue in DirectMode, flush on shutdown
+        if ($this->directMode !== null) {
+            $this->directMode->addLog([
+                'level'       => strtolower($level),
+                'message'     => $message,
+                'context'     => $metadata,
+                'source'      => $metadata['source'] ?? 'unknown',
+                'logger_name' => $metadata['logger'] ?? 'unknown',
+            ]);
+            return true;
+        }
+
+        // Legacy HTTP send (daemon mode / manual usage)
         $client = $this->getHttpClient();
         try {
             $response = $client->post(
