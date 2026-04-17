@@ -334,6 +334,7 @@ For the full publishing guide (Symfony Flex recipe, Laravel News, SemVer rules),
 | 📖 Documentation | <https://lescopr.com/docs> |
 | 🌐 App | <https://app.lescopr.com> |
 | 📧 Email | <support@lescopr.com> |
+| 🐛 Bug reports | <https://github.com/Lescopr/lescopr-php/issues> |
 
 ---
 
