@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0] — 2026-04-17
 
+---
+
+## [1.0.0] — 2026-04-17
+
 ### Added
 - **Core SDK** (`Lescopr\Core\Lescopr`) — central object handling config, log queue, and daemon lifecycle
 - **Background daemon** (`DaemonRunner`) — `pcntl_fork` process that flushes logs to `api.lescopr.com` every 5 s with heartbeat every 30 s; graceful fallback to synchronous HTTP when `pcntl` is unavailable
@@ -55,4 +59,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 [Unreleased]: https://github.com/Lescopr/lescopr-php/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/Lescopr/lescopr-php/releases/tag/v1.0.0
 [1.0.0]: https://github.com/Lescopr/lescopr-php/releases/tag/v1.0.0
